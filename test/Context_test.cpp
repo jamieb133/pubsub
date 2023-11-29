@@ -31,11 +31,11 @@ TEST(ContextTest, publish)
     auto transporter3 = std::make_shared<MockTransporter>();
 
     EXPECT_CALL(*transporter1, send)
-        .Times(testing::AtLeast(1));
+        .Times(testing::Exactly(1));
     EXPECT_CALL(*transporter2, send)
-        .Times(testing::AtLeast(1));
+        .Times(testing::Exactly(1));
     EXPECT_CALL(*transporter3, send)
-        .Times(testing::AtLeast(1));
+        .Times(testing::Exactly(1));
 
     context.add_transporter(transporter1);
     context.add_transporter(transporter2);
