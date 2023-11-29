@@ -1,5 +1,6 @@
 #include "pubsub.hpp"
 #include "Deliverer.h"
+#include "ITopic.h"
 
 using namespace pubsub;
 
@@ -9,7 +10,7 @@ bool Deliverer::has_subscribers(std::string const& topicName)
 }
 
 void Deliverer::register_subscriber(std::string const& topicName,
-                                            SubscriberCallback callback)
+                                        SubscriberCallback callback)
 {
     std::lock_guard<std::mutex> lock { mMutex };
 
@@ -22,16 +23,16 @@ void Deliverer::register_subscriber(std::string const& topicName,
     mSubscriberMap[topicName].push_back(callback);
 }
 
-void Deliverer::on_data(std::string const& topicName,
-                            std::shared_ptr<ITopic> const topic)
+void Deliverer::on_data(std::shared_ptr<ITopic> const topic)
 {
     std::lock_guard<std::mutex> lock { mMutex };
+    std::string const& topicName { topic->get_name() };
 
     if (!has_subscribers(topicName))
     {
         return;
     }
-
+    
     for(auto const& callback : mSubscriberMap[topicName])
     {
         callback(topic);

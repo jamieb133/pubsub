@@ -23,6 +23,6 @@ void Context::subscribe(std::function<void(std::shared_ptr<TopicType>)> callback
 
     for(std::shared_ptr<IDeliverer>& deliverer : mDeliverers)
     {
-        deliverer->register_subscriber(TopicType::getName(), wrappedCallback);
+        deliverer->register_subscriber(TopicType::_get_name(), wrappedCallback);
     }
 }

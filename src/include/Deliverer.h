@@ -20,7 +20,6 @@ namespace pubsub
     public:
         void register_subscriber(std::string const& topicName,
                                     SubscriberCallback callback);
-        void on_data(std::string const& topicName,
-                        std::shared_ptr<ITopic> const topic);
+        void on_data(std::shared_ptr<ITopic> const topic);
     };
 }
