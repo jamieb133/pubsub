@@ -24,13 +24,21 @@ TEST(ContextTest, subscribe)
 TEST(ContextTest, publish) 
 {
     pubsub::Context context{};
-
-    auto transporter = std::make_shared<MockTransporter>();
     auto topic = std::make_shared<MockTopic>();
 
-    EXPECT_CALL(*transporter, send)
+    auto transporter1 = std::make_shared<MockTransporter>();
+    auto transporter2 = std::make_shared<MockTransporter>();
+    auto transporter3 = std::make_shared<MockTransporter>();
+
+    EXPECT_CALL(*transporter1, send)
+        .Times(testing::AtLeast(1));
+    EXPECT_CALL(*transporter2, send)
+        .Times(testing::AtLeast(1));
+    EXPECT_CALL(*transporter3, send)
         .Times(testing::AtLeast(1));
 
-    context.add_transporter(transporter);
+    context.add_transporter(transporter1);
+    context.add_transporter(transporter2);
+    context.add_transporter(transporter3);
     context.publish(topic);
 }
