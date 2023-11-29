@@ -10,7 +10,7 @@
 
 namespace pubsub
 {
-    class Deliverer : IDeliverer
+    class Deliverer : public IDeliverer
     {
     private:
         std::map<std::string, std::vector<SubscriberCallback>> mSubscriberMap {};

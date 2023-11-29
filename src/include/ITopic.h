@@ -1,9 +1,9 @@
 #pragma once
 
+#include "ISerialiser.h"
+
 namespace pubsub
 {
-    class ISerialiser;
-
     class ITopic 
     {
     public:
