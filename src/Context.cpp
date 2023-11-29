@@ -1,19 +1,19 @@
 #include "Context.h"
-#include "IDistributor.h"
+#include "ITransporter.h"
 
 using namespace pubsub;
 
 void Context::publish(std::shared_ptr<ITopic> topic)
 {
-    for(auto const& distributor : mDistributors)
+    for(auto const& transporter : mTransporters)
     {
-        distributor->send(topic);
+        transporter->send(topic);
     }
 }
 
-void Context::add_distributor(std::shared_ptr<IDistributor> distributor)
+void Context::add_transporter(std::shared_ptr<ITransporter> transporter)
 {
-    mDistributors.push_back(distributor);
+    mTransporters.push_back(transporter);
 }
 
 void Context::add_deliverer(std::shared_ptr<IDeliverer> deliverer)

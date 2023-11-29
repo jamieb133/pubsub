@@ -2,7 +2,7 @@
 #include "Context.hpp"
 #include "MockTopic.h"
 #include "MockDeliverer.h"
-#include "MockDistributor.h"
+#include "MockTransporter.h"
 
 using namespace testing;
 
@@ -25,12 +25,12 @@ TEST(ContextTest, publish)
 {
     pubsub::Context context{};
 
-    auto distributor = std::make_shared<MockDistributor>();
+    auto transporter = std::make_shared<MockTransporter>();
     auto topic = std::make_shared<MockTopic>();
 
-    EXPECT_CALL(*distributor, send)
+    EXPECT_CALL(*transporter, send)
         .Times(testing::AtLeast(1));
 
-    context.add_distributor(distributor);
+    context.add_transporter(transporter);
     context.publish(topic);
 }
