@@ -17,6 +17,14 @@ enable_testing()
 
 file(GLOB srcs ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
+if(UNIX OR APPLE)
+    file(GLOB os_srcs ${CMAKE_CURRENT_SOURCE_DIR}/unix/*.cpp)
+elseif(WIN32)
+    file(GLOB os_srcs ${CMAKE_CURRENT_SOURCE_DIR}/windows/*.cpp)
+endif()
+
+list(APPEND srcs ${os_srcs})
+
 add_executable(unit_tests ${srcs})
 target_link_libraries(unit_tests PUBLIC pubsub)
 target_link_libraries(unit_tests PUBLIC GTest::gtest_main)
