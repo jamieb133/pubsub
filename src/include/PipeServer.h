@@ -2,11 +2,14 @@
 
 #include <queue>
 #include <vector>
+#include <array>
 #include <string>
 #include <memory>
 #include <thread>
 #include <atomic>
 
+#include "pubsub_macros.h"
+#include "IServer.h"
 #include "IPipeServerImpl.h"
 #include "ThreadSafeQueue.h"
 
@@ -16,10 +19,10 @@ namespace pubsub
     class IDeserialiser;
     class ITopic;
 
-    class PipeServer
+    class PipeServer : public IServer
     {
     private:
-        ThreadSafeQueue<std::shared_ptr<std::vector<char> const>> mDataRxQueue{};
+        ThreadSafeQueue<std::shared_ptr<std::vector<char>>> mDataRxQueue{};
         std::string const mName;
         std::shared_ptr<IDeliverer> const mDeliverer;
         std::shared_ptr<IPipeServerImpl> const mImpl;
@@ -36,6 +39,8 @@ namespace pubsub
                     std::shared_ptr<IDeliverer> const deliverer,
                     std::shared_ptr<IDeserialiser> deserialiser);
         virtual ~PipeServer();
+        void register_topic(std::string const& topicName, 
+                            ITopicReconstructor const& topicReconstructor);
 
         // Test purposes only.
         PipeServer(std::string const& name, 

@@ -3,6 +3,7 @@
 #include "pubsub.hpp"
 #include "Context.h"
 #include "IDeliverer.h"
+#include "IServer.h"
 
 using namespace pubsub;
 
@@ -24,5 +25,10 @@ void Context::subscribe(std::function<void(std::shared_ptr<TopicType>)> callback
     for(std::shared_ptr<IDeliverer>& deliverer : mDeliverers)
     {
         deliverer->register_subscriber(TopicType::_get_name(), wrappedCallback);
+    }
+
+    for(std::shared_ptr<IServer>& server : mServers)
+    {
+        server->register_topic(TopicType::_get_name(), TopicType::_get_reconstructor());
     }
 }

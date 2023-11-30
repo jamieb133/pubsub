@@ -11,8 +11,11 @@ namespace pubsub
     {
     private:
         std::string const mName;
+        int mFd;
     public:
         PipeTransporterImpl(std::string const& name);
-        void send_bytes(std::vector<char> const& data);
+        virtual ~PipeTransporterImpl();
+        void send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,
+                        size_t size);
     };
 }

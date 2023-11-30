@@ -20,45 +20,38 @@ PipeServer::PipeServer(std::string const& name,
     mDeliverer{deliverer},
     mImpl{impl},
     mDeserialiser{deserialiser},
-    mPollDataQueueThread{[this](){ poll_data_queue(); }}
+    mReadPipeThread{[this](){ read_pipe(); }}
 {}
 
 PipeServer::~PipeServer()
 {
     mRunning = false;
-    mPollDataQueueThread.join();
     mReadPipeThread.join();
 }
 
 void PipeServer::read_pipe()
 {
-    std::shared_ptr<std::vector<char>> rxData{};
-
     while(mRunning)
     {
-        if(mImpl->read_pipe(*rxData))
+        std::shared_ptr<std::vector<char>> rxData{};
+        if(mImpl->read_pipe(rxData))
         {
-            mDataRxQueue.push(rxData);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds{25});
-    }
-}
+            
+            // TODO: push this onto a queue to be processed by a different thread.
 
-void PipeServer::poll_data_queue()
-{
-    std::shared_ptr<std::vector<char> const> data;
-
-    while(mRunning)
-    {
-        if(mDataRxQueue.pop(data))
-        {
-            std::shared_ptr<ITopic> deserialisedTopic { mDeserialiser->deserialise_bytes(*data) };
+            std::shared_ptr<ITopic> deserialisedTopic { mDeserialiser->deserialise(*rxData) };
             if(deserialisedTopic)
             {
                 mDeliverer->on_data(deserialisedTopic);
             }
-        }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds{25});
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
+}
+
+void PipeServer::register_topic(std::string const& topicName, 
+                                ITopicReconstructor const& topicReconstructor)
+{
+    mDeserialiser->register_topic(topicName, topicReconstructor);
 }

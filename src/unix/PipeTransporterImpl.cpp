@@ -8,18 +8,31 @@
 
 using namespace pubsub;
 
+static constexpr int DEFAULT_FILE_PERMISSION { 0666 };
+
 PipeTransporterImpl::PipeTransporterImpl(std::string const& name) :
-    mName { "/tmp/" + name }
+    mName { "./" + name },
+    mFd {mkfifo(mName.c_str(), DEFAULT_FILE_PERMISSION)}
 {
-    constexpr int DEFAULT_FILE_PERMISSION { 0666 };
-    if(mkfifo(mName.c_str(), DEFAULT_FILE_PERMISSION) == -1)
+    if(mFd == -1
+        && errno != 17)
     {
         std::cerr << "Error, couldn't create fifo " << errno << std::endl;
         return;
     }
 }
 
-void PipeTransporterImpl::send_bytes(std::vector<char> const& data)
+PipeTransporterImpl::~PipeTransporterImpl()
+{
+    if (mFd != -1
+        && close(mFd))
+    {
+        std::cerr << "Error, couldn't delete fifo " << errno << std::endl;
+    }
+}
+
+void PipeTransporterImpl::send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,
+                                        size_t const size)
 {
     int fd { open(mName.c_str(), O_WRONLY) };
     
@@ -29,6 +42,9 @@ void PipeTransporterImpl::send_bytes(std::vector<char> const& data)
         return;
     }
 
-    write(fd, data.data(), data.size());
+    if(write(fd, data.data(), size) == -1)
+    {
+        std::cerr << "Error, couldn't write to fifo " << errno << std::endl;
+    }
 }
 

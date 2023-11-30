@@ -1,13 +1,13 @@
 #pragma once
 
-#include "ISerialiser.h"
+#include "IMessageProcessor.h"
 
 namespace pubsub
 {
     class ITopic 
     {
     public:
-        virtual void serialise(ISerialiser const& serialiser) = 0;
+        virtual void process_attributes(IMessageProcessor& messageProcessor) = 0;
         virtual std::string const& get_name() = 0;
     };
 }

@@ -18,8 +18,7 @@ PipeTransporter::PipeTransporter(std::string const& name,
 
 void PipeTransporter::send(std::shared_ptr<ITopic> const topic)
 {
-    std::vector<char> serialisedMessage {};
-    mSerialiser->serialise_topic(topic, serialisedMessage);
-    mImpl->send_bytes(serialisedMessage);
+    size_t messageSize { mSerialiser->serialise(topic, mOutputBuffer) };
+    mImpl->send_bytes(mOutputBuffer, messageSize);
 }
 

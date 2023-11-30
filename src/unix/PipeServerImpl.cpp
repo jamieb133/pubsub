@@ -12,10 +12,21 @@
 using namespace pubsub;
 
 PipeServerImpl::PipeServerImpl(std::string const& name) :
-    mName{"/tmp/" + name}
-{}
+    mName{"./" + name}
+{
+    constexpr int DEFAULT_FILE_PERMISSION { 0666 };
+    if(mkfifo(mName.c_str(), DEFAULT_FILE_PERMISSION) == -1)
+    {
+        // Pipe may already exist.
+        if(errno != 17)
+        {
+            std::cerr << "Error, couldn't create fifo " << errno << std::endl;
+            return;
+        }
+    }
+}
 
-bool const PipeServerImpl::read_pipe(std::vector<char>& buffer)
+bool const PipeServerImpl::read_pipe(std::shared_ptr<std::vector<char>>& buffer)
 {
     int fd { open(mName.c_str(), O_RDONLY) };
     if(fd == -1)
@@ -25,8 +36,8 @@ bool const PipeServerImpl::read_pipe(std::vector<char>& buffer)
     }
 
     // TODO: implement more efficient strategy...
-    buffer.resize(MAXIMUM_BUFFER_SIZE);
-    ssize_t numBytesRead { read(fd, buffer.data(), buffer.size()) };
+    buffer = std::make_shared<std::vector<char>>(MAXIMUM_BUFFER_SIZE);
+    ssize_t numBytesRead { read(fd, buffer->data(), buffer->size()) };
 
     if(numBytesRead == -1)
     {
@@ -34,7 +45,7 @@ bool const PipeServerImpl::read_pipe(std::vector<char>& buffer)
         return false;
     }
 
-    buffer.resize(numBytesRead);
+    buffer->resize(numBytesRead);
 
     return true;
 }
