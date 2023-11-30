@@ -1,0 +1,112 @@
+#include <string_view>
+#include <algorithm>
+
+#include "basic_serialisation.h"
+#include "ITopic.h"
+#include "ITopicReconstructor.h"
+
+using namespace pubsub;
+using namespace pubsub::basic_serialisation;
+
+static std::array<char,2> const string_size_to_bytes(std::string const& val)
+{
+    uint16_t size { static_cast<uint16_t>(val.size()) };
+    return std::array<char,2> {
+        static_cast<char>((size >> 0) & 0xff),
+        static_cast<char>((size >> 8) & 0xff)
+    };
+}
+
+static uint16_t const string_size_from_bytes(char const b1,
+                                                char const b2)
+{
+    auto lsb = static_cast<uint16_t>((b1 >> 0) & 0x00ff);
+    auto msb = static_cast<uint16_t>((b2 << 8) & 0xff00);
+    return msb | lsb;
+}
+
+size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
+                                    std::array<char,MAXIMUM_BUFFER_SIZE>& buffer)
+{
+    mBuffer = &buffer;
+
+    // Add message preamble.
+    mIter = std::copy(MESSAGE_PREFIX.begin(), MESSAGE_PREFIX.end(), buffer.begin());
+    mCurrentMessageSize = MESSAGE_PREFIX.size();
+
+    // Add topic name size.
+    std::string const& topicName { topic->get_name() };
+    std::array<char,2> const sizeBytes { string_size_to_bytes(topicName) };
+    mIter = std::copy(sizeBytes.begin(), sizeBytes.end(), mIter);
+
+    // Add topic name.
+    mIter = std::copy(topicName.begin(), topicName.end(), mIter);
+    mCurrentMessageSize += topicName.size();
+
+    // Add attributes.
+    topic->process_attributes(*this);
+
+    return mCurrentMessageSize;
+}
+
+std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(std::vector<char> const& buffer)
+{
+    mBuffer = &buffer;
+    mIter = buffer.begin();
+
+    // TODO: zero copy here...
+    std::string const message { buffer.data(), buffer.data() + buffer.size() };
+
+    size_t index { message.find(MESSAGE_PREFIX) };
+    if(index == std::string::npos)
+        return nullptr;
+
+    // Get topic name size.
+    index += MESSAGE_PREFIX.size();
+    uint16_t nameSize { string_size_from_bytes(buffer[index], buffer[index+1]) };
+
+    index +=2;
+    auto start = buffer.data() + index;
+    auto end = start + nameSize;
+    std::string const topicName { start, end };
+
+    if(mTopicReconstructors.find(topicName) == mTopicReconstructors.end())
+        return nullptr;
+
+    index += topicName.size();
+    mIter += index;
+
+    return mTopicReconstructors[topicName]->deserialise_attributes(*this);
+}
+
+void BasicSerialiser::attribute(std::string& value)
+{
+    // Add length of string.
+    std::array<char,2> len { string_size_to_bytes(value) };
+    mIter = std::copy(len.begin(), len.end(), mIter);
+    mCurrentMessageSize += 2;
+
+    // Copy string content.
+    mIter = std::copy(value.begin(), value.end(), mIter);
+    mCurrentMessageSize += value.size();
+}
+
+void BasicDeserialiser::attribute(std::string& value)
+{
+    uint16_t size { string_size_from_bytes(*mIter++, *mIter++) };
+    if(size > mBuffer->size())
+    {
+        return;
+    }
+    value = std::string { mIter, mIter + size };
+    if(mBuffer->end() != (mIter + 1))
+    {
+        mIter++;
+    }
+}
+
+void BasicDeserialiser::register_topic(std::string const& topicName, 
+                                        ITopicReconstructor const& handler)
+{
+    mTopicReconstructors.insert({topicName, &handler});
+}

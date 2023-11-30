@@ -1,13 +1,17 @@
 #pragma once
 
 #include <gmock/gmock.h> 
-#include <vector>
+#include <array>
+#include <memory>
 #include "ISerialiser.h"
 #include "ITopic.h"
 
 class MockSerialiser :public pubsub::ISerialiser
 {
 public:
-    MOCK_METHOD(void, serialise_topic, (std::shared_ptr<pubsub::ITopic> const,
-                                        std::vector<char>&), (override));
+    using TopicPtr = std::shared_ptr<pubsub::ITopic> const;
+    using Buffer = std::array<char,pubsub::MAXIMUM_BUFFER_SIZE>&;
+
+    MOCK_METHOD(size_t, serialise, (TopicPtr,Buffer), (override));
+    MOCK_METHOD(void, attribute, (std::string&), (override));
 };

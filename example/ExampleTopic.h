@@ -2,45 +2,38 @@
 
 #include "pubsub.hpp"
 #include "ITopic.h"
+#include "ITopicReconstructor.h"
+#include "ISerialiser.h"
+#include "IDeserialiser.h"
+
+class ExampleTopic;
 
 class ExampleTopic : public pubsub::ITopic
 {
 private:
     std::string message {};
+
 public:
     std::string const getMessage() 
     {
         return message;
     }
 
-    ExampleTopic(std::string const& messageIn) :
-        message { messageIn }
-    {}
-
-    ExampleTopic(ExampleTopic const& other) :
-        message { other.message }
-    {}
-
-    ExampleTopic(ExampleTopic&& other) :
-        message { other.message }
-    {}
-
-    ExampleTopic& operator=(ExampleTopic const& other)
+    void process_attributes(pubsub::IMessageProcessor& messageProcessor) override
     {
-        message = other.message;
-        return *this;
+        messageProcessor.attribute(message);
     }
-
-    ExampleTopic& operator=(ExampleTopic&& other)
+    
+    class TopicReconstructor : public pubsub::ITopicReconstructor
     {
-        message = other.message;
-        return *this;
-    }
+    public:
+        std::shared_ptr<ITopic> deserialise_attributes(IDeserialiser& deserialiser)
+        {
+            auto topic = std::make_shared<ExampleTopic>();
+            topic->process_attributes(deserialiser);
+            return topic;
+        }
+    };
 
-    void serialise(pubsub::ISerialiser const& serialiser) override
-    {
-
-    }
-
-    PUBSUB_TOPIC("example topic");
+    PUBSUB_TOPIC("example topic")
 };

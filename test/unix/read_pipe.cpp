@@ -7,7 +7,8 @@
 #include <vector>
 
 bool const read_pipe(std::string const& name,
-                        std::vector<char>& buffer)
+                        char* buffer,
+                        size_t size)
 {
     std::string const fullName { "/tmp/" + name };
 
@@ -18,7 +19,7 @@ bool const read_pipe(std::string const& name,
         return false;
     }
 
-    if(read(fd, buffer.data(), buffer.size()) == -1)
+    if(read(fd, buffer, size) == -1)
     {
         std::cerr << "Error, couldn't read from " << fullName << " " << errno << std::endl;
         return false;

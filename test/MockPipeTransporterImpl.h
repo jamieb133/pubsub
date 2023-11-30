@@ -6,5 +6,7 @@
 class MockPipeTransporterImpl :public pubsub::IPipeTransporterImpl
 {
 public:
-    MOCK_METHOD(void, send_bytes, (std::vector<char> const&), (override));
+    using Buffer = std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> const&;
+
+    MOCK_METHOD(void, send_bytes, (Buffer,size_t), (override));
 };

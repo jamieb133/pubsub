@@ -3,14 +3,17 @@
 #include <memory>
 #include <vector>
 
+#include "pubsub_macros.h"
+#include "IMessageProcessor.h"
+
 namespace pubsub
 {
     class ITopic;
 
-    class ISerialiser
+    class ISerialiser : public IMessageProcessor
     {
     public:
-        virtual void serialise_topic(std::shared_ptr<ITopic> const topic,
-                                        std::vector<char>& output_buffer) = 0;
+        virtual size_t serialise(std::shared_ptr<ITopic> const topic,
+                                    std::array<char,MAXIMUM_BUFFER_SIZE>& buffer) = 0;
     };
 }
