@@ -14,6 +14,9 @@ private:
     std::string message {};
 
 public:
+    ExampleTopic() = default;
+    ExampleTopic(std::string const& msg) : message{msg}{}
+
     std::string const getMessage() 
     {
         return message;
@@ -24,16 +27,5 @@ public:
         messageProcessor.attribute(message);
     }
     
-    class TopicReconstructor : public pubsub::ITopicReconstructor
-    {
-    public:
-        std::shared_ptr<ITopic> deserialise_attributes(IDeserialiser& deserialiser)
-        {
-            auto topic = std::make_shared<ExampleTopic>();
-            topic->process_attributes(deserialiser);
-            return topic;
-        }
-    };
-
-    PUBSUB_TOPIC("example topic")
+    PUBSUB_TOPIC("example topic", ExampleTopic)
 };
