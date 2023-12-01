@@ -30,7 +30,7 @@ static std::string const string_size_to_bytes(std::string const& val)
     return std::string { bytes.begin(), bytes.end() };
 }
 
-TEST(basic_serialisation, serialise_buffer) 
+TEST(basic_serialisation, serialise_topic) 
 {
     pubsub::basic_serialisation::BasicSerialiser serialiser {};
     auto topic = std::make_shared<TestTopic>("test message");
@@ -70,3 +70,22 @@ TEST(basic_serialisation, deserialise_buffer)
     ASSERT_NE(unwrappedTopic, nullptr);
     EXPECT_EQ(unwrappedTopic->message, expectedTopic.message);
 }
+
+TEST(basic_serialisation, serialise_and_deserialise)
+{
+    auto inputTopic = std::make_shared<TestTopic>("test message");
+    pubsub::basic_serialisation::BasicSerialiser serialiser{};
+    pubsub::basic_serialisation::BasicDeserialiser deserialiser{};
+    deserialiser.register_topic(inputTopic->get_name(), TestTopic::_get_reconstructor());
+    std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> buffer{};
+    size_t size { serialiser.serialise(inputTopic, buffer) };
+    
+    auto outputTopic = deserialiser.deserialise(std::vector<char>{buffer.data(), buffer.data() + size});
+    ASSERT_NE(outputTopic, nullptr);
+    
+    auto unwrappedTopic = std::dynamic_pointer_cast<TestTopic>(outputTopic);
+    ASSERT_NE(unwrappedTopic, nullptr);
+
+    EXPECT_EQ(inputTopic->message, unwrappedTopic->message);
+} 
+
