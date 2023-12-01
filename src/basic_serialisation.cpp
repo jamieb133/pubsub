@@ -38,6 +38,7 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
     std::string const& topicName { topic->get_name() };
     std::array<char,2> const sizeBytes { string_size_to_bytes(topicName) };
     mIter = std::copy(sizeBytes.begin(), sizeBytes.end(), mIter);
+    mCurrentMessageSize += 2;
 
     // Add topic name.
     mIter = std::copy(topicName.begin(), topicName.end(), mIter);
