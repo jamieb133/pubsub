@@ -10,7 +10,7 @@ bool const read_pipe(std::string const& name,
                         char* buffer,
                         size_t size)
 {
-    std::string const fullName { "/tmp/" + name };
+    std::string const fullName { name };
 
     int fd { open(fullName.c_str(), O_RDONLY) };
     if(fd == -1)
