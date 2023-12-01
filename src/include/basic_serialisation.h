@@ -24,12 +24,12 @@ namespace pubsub
         private:
             std::array<char,MAXIMUM_BUFFER_SIZE> const* mBuffer{};
             std::array<char,MAXIMUM_BUFFER_SIZE>::iterator mIter{};
-            size_t mCurrentMessageSize{};
         public:
             size_t serialise(std::shared_ptr<ITopic> const topic,
                                 std::array<char,MAXIMUM_BUFFER_SIZE>& buffer);
 
             void attribute(std::string& value);
+            void attribute(uint8_t& value);
 
         };
 
@@ -48,6 +48,7 @@ namespace pubsub
                                 ITopicReconstructor const& handler);
 
             void attribute(std::string& value);
+            void attribute(uint8_t& value);
         };
     }
 }

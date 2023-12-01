@@ -32,22 +32,19 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
 
     // Add message preamble.
     mIter = std::copy(MESSAGE_PREFIX.begin(), MESSAGE_PREFIX.end(), buffer.begin());
-    mCurrentMessageSize = MESSAGE_PREFIX.size();
 
     // Add topic name size.
     std::string const& topicName { topic->get_name() };
     std::array<char,2> const sizeBytes { string_size_to_bytes(topicName) };
     mIter = std::copy(sizeBytes.begin(), sizeBytes.end(), mIter);
-    mCurrentMessageSize += 2;
 
     // Add topic name.
     mIter = std::copy(topicName.begin(), topicName.end(), mIter);
-    mCurrentMessageSize += topicName.size();
 
     // Add attributes.
     topic->process_attributes(*this);
 
-    return mCurrentMessageSize;
+    return mIter - buffer.begin();
 }
 
 std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(std::vector<char> const& buffer)
@@ -85,11 +82,9 @@ void BasicSerialiser::attribute(std::string& value)
     // Add length of string.
     std::array<char,2> len { string_size_to_bytes(value) };
     mIter = std::copy(len.begin(), len.end(), mIter);
-    mCurrentMessageSize += 2;
 
     // Copy string content.
     mIter = std::copy(value.begin(), value.end(), mIter);
-    mCurrentMessageSize += value.size();
 }
 
 void BasicDeserialiser::attribute(std::string& value)
@@ -100,10 +95,19 @@ void BasicDeserialiser::attribute(std::string& value)
         return;
     }
     value = std::string { mIter, mIter + size };
-    if(mBuffer->end() != (mIter + 1))
-    {
-        mIter++;
-    }
+    mIter += size;
+}
+
+void BasicSerialiser::attribute(uint8_t& value)
+{
+    *mIter = value;
+    mIter++;
+}
+
+void BasicDeserialiser::attribute(uint8_t& value)
+{
+    value = *mIter;
+    mIter++;
 }
 
 void BasicDeserialiser::register_topic(std::string const& topicName, 
