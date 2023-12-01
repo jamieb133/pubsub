@@ -6,7 +6,7 @@
 
 namespace pubsub
 {
-    class IPipeTransporterImpl
+    class IClient
     {
     public:
         virtual void send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,

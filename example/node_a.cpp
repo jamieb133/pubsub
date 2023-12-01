@@ -5,9 +5,11 @@
 
 #include "Context.hpp"
 #include "DirectTransporter.h"
-#include "PipeTransporter.h"
+#include "IndirectTransporter.h"
+#include "PipeClient.h"
 #include "PipeServer.h"
 #include "Deliverer.h"
+#include "Receiver.h"
 #include "basic_serialisation.h"
 #include "ExampleTopic.h"
 
@@ -21,19 +23,25 @@ int main()
     // A direct transporter will distribute messages in the same process with no serialisation.
     auto directTransporter = std::make_shared<pubsub::DirectTransporter>(deliverer);
 
-    // Create a serialiser for transporters that require it.
-    auto serialiser = std::make_shared<pubsub::basic_serialisation::BasicSerialiser>();
-    auto deserialiser = std::make_shared<pubsub::basic_serialisation::BasicDeserialiser>();
-
-    // A pipe transporter with a server will distribute messages across processes, therefore require serialisers.
+    // An indirect transporter will pass serialised messages and can therefore be used across
+    // processes or machines if an appropriate client is used. In this case, let's use the 
+    // basic serialiser and a named pipe.
     std::string const pipename { "pubsub_example_pipe" };
-    auto pipeTransporter = std::make_shared<pubsub::PipeTransporter>(pipename, serialiser);
-    auto pipeServer = std::make_shared<pubsub::PipeServer>(pipename, deliverer, deserialiser);
+    auto pipeClient = std::make_shared<pubsub::PipeClient>(pipename);
+    auto serialiser = std::make_shared<pubsub::basic_serialisation::BasicSerialiser>();
+    auto indirectTransporter = std::make_shared<pubsub::IndirectTransporter>(serialiser, pipeClient);
+
+    // We need a receiver to receive serialised messages sent via the indirect transporter. It
+    // will use a matching deserialiser and a pipe server with the same name. It also needs the
+    // deliver to pass up valid messages to the subscribers.
+    auto pipeServer = std::make_shared<pubsub::PipeServer>(pipename);
+    auto deserialiser = std::make_shared<pubsub::basic_serialisation::BasicDeserialiser>();
+    auto receiver = std::make_shared<pubsub::Receiver>(deliverer, deserialiser, pipeServer);
 
     pubsub::Context context{};
     context.add_deliverer(deliverer);
-    context.add_transporter(pipeTransporter);
-    context.add_server(pipeServer);
+    context.add_transporter(indirectTransporter);
+    context.add_receiver(receiver);
 
     std::function<void(std::shared_ptr<ExampleTopic> const)> callback 
     {

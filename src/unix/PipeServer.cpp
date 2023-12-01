@@ -6,12 +6,12 @@
 #include <iostream>
 #include <vector>
 
-#include "PipeServerImpl.h"
+#include "PipeServer.h"
 #include "pubsub_macros.h"
 
 using namespace pubsub;
 
-PipeServerImpl::PipeServerImpl(std::string const& name) :
+PipeServer::PipeServer(std::string const& name) :
     mName{"./" + name}
 {
     constexpr int DEFAULT_FILE_PERMISSION { 0666 };
@@ -26,7 +26,7 @@ PipeServerImpl::PipeServerImpl(std::string const& name) :
     }
 }
 
-bool const PipeServerImpl::read_pipe(std::shared_ptr<std::vector<char>>& buffer)
+bool const PipeServer::read(std::shared_ptr<std::vector<char>>& buffer)
 {
     int fd { open(mName.c_str(), O_RDONLY) };
     if(fd == -1)
@@ -37,7 +37,7 @@ bool const PipeServerImpl::read_pipe(std::shared_ptr<std::vector<char>>& buffer)
 
     // TODO: implement more efficient strategy...
     buffer = std::make_shared<std::vector<char>>(MAXIMUM_BUFFER_SIZE);
-    ssize_t numBytesRead { read(fd, buffer->data(), buffer->size()) };
+    ssize_t numBytesRead { ::read(fd, buffer->data(), buffer->size()) };
 
     if(numBytesRead == -1)
     {

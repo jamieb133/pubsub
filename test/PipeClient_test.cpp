@@ -3,17 +3,17 @@
 #include <mutex>
 #include <condition_variable>
 #include <array>
-#include "PipeTransporterImpl.h"
+#include "PipeClient.h"
 #include "pubsub_macros.h"
 
 extern bool const read_pipe(std::string const& name,
                             char* buffer,
                             size_t size);
 
-TEST(PipeTransporterImplTest, send_bytes) 
+TEST(PipeClientTest, send_bytes) 
 {
     std::string const pipename{ "test_pipe" };
-    pubsub::PipeTransporterImpl impl{ pipename };
+    pubsub::PipeClient client{ pipename };
 
     bool success{false}; 
     bool finished{false}; 
@@ -34,7 +34,7 @@ TEST(PipeTransporterImplTest, send_bytes)
         }
     };
 
-    impl.send_bytes(writeBuffer, writeBuffer.size());
+    client.send_bytes(writeBuffer, writeBuffer.size());
     std::unique_lock<std::mutex> lock { mutex };
     cv.wait(lock, [&finished](){ return finished; });
     t.join();

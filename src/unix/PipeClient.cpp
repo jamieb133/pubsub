@@ -4,13 +4,13 @@
 #include <fcntl.h>
 #include <iostream>
 
-#include "PipeTransporterImpl.h"
+#include "PipeClient.h"
 
 using namespace pubsub;
 
 static constexpr int DEFAULT_FILE_PERMISSION { 0666 };
 
-PipeTransporterImpl::PipeTransporterImpl(std::string const& name) :
+PipeClient::PipeClient(std::string const& name) :
     mName { "./" + name },
     mFd {mkfifo(mName.c_str(), DEFAULT_FILE_PERMISSION)}
 {
@@ -22,7 +22,7 @@ PipeTransporterImpl::PipeTransporterImpl(std::string const& name) :
     }
 }
 
-PipeTransporterImpl::~PipeTransporterImpl()
+PipeClient::~PipeClient()
 {
     if (mFd != -1
         && close(mFd))
@@ -31,7 +31,7 @@ PipeTransporterImpl::~PipeTransporterImpl()
     }
 }
 
-void PipeTransporterImpl::send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,
+void PipeClient::send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,
                                         size_t const size)
 {
     int fd { open(mName.c_str(), O_WRONLY) };

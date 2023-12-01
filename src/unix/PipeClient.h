@@ -1,20 +1,21 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <array>
 
-#include "IPipeTransporterImpl.h"
+#include "pubsub_macros.h"
+#include "IClient.h"
 
 namespace pubsub
 {
-    class PipeTransporterImpl : public IPipeTransporterImpl
+    class PipeClient : public IClient
     {
     private:
         std::string const mName;
         int mFd;
     public:
-        PipeTransporterImpl(std::string const& name);
-        virtual ~PipeTransporterImpl();
+        PipeClient(std::string const& name);
+        virtual ~PipeClient();
         void send_bytes(std::array<char,MAXIMUM_BUFFER_SIZE> const& data,
                         size_t size);
     };

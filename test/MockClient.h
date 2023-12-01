@@ -1,9 +1,9 @@
 #pragma once
 
 #include <gmock/gmock.h> 
-#include "IPipeTransporterImpl.h"
+#include "IClient.h"
 
-class MockPipeTransporterImpl :public pubsub::IPipeTransporterImpl
+class MockClient :public pubsub::IClient
 {
 public:
     using Buffer = std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> const&;

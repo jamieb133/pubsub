@@ -1,40 +1,32 @@
-#include "PipeServer.h"
-#include "PipeServerImpl.h"
+#include "Receiver.h"
+#include "IServer.h"
 #include "IDeserialiser.h"
 #include "IDeliverer.h"
 #include "ITopic.h"
 
 using namespace pubsub;
 
-PipeServer::PipeServer(std::string const& name,
-                        std::shared_ptr<IDeliverer> const deliverer,
-                        std::shared_ptr<IDeserialiser> deserialiser) :
-    PipeServer {name, deliverer, deserialiser, std::make_shared<PipeServerImpl>(name)}
-{}
-
-PipeServer::PipeServer(std::string const& name,
-                        std::shared_ptr<IDeliverer> const deliverer,
-                        std::shared_ptr<IDeserialiser> deserialiser,
-                        std::shared_ptr<IPipeServerImpl> const impl) :
-    mName{name},
+Receiver::Receiver(std::shared_ptr<IDeliverer> const deliverer,
+                    std::shared_ptr<IDeserialiser> deserialiser,
+                    std::shared_ptr<IServer> const server) :
     mDeliverer{deliverer},
-    mImpl{impl},
+    mServer{server},
     mDeserialiser{deserialiser},
-    mReadPipeThread{[this](){ read_pipe(); }}
+    mReadPipeThread{[this](){ read_server(); }}
 {}
 
-PipeServer::~PipeServer()
+Receiver::~Receiver()
 {
     mRunning = false;
     mReadPipeThread.join();
 }
 
-void PipeServer::read_pipe()
+void Receiver::read_server()
 {
     while(mRunning)
     {
         std::shared_ptr<std::vector<char>> rxData{};
-        if(mImpl->read_pipe(rxData))
+        if(mServer->read(rxData))
         {
             
             // TODO: push this onto a queue to be processed by a different thread.
@@ -50,7 +42,7 @@ void PipeServer::read_pipe()
     }
 }
 
-void PipeServer::register_topic(std::string const& topicName, 
+void Receiver::register_topic(std::string const& topicName, 
                                 ITopicReconstructor const& topicReconstructor)
 {
     mDeserialiser->register_topic(topicName, topicReconstructor);

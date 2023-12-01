@@ -21,7 +21,7 @@ void Context::add_deliverer(std::shared_ptr<IDeliverer> deliverer)
     mDeliverers.push_back(deliverer);
 }
 
-void Context::add_server(std::shared_ptr<IServer> server)
+void Context::add_receiver(std::shared_ptr<IReceiver> receiver)
 {
-    mServers.push_back(server);
+    mReceivers.push_back(receiver);
 }
