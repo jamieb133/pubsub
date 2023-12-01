@@ -30,6 +30,7 @@ namespace pubsub
 
             void attribute(std::string& value);
             void attribute(uint8_t& value);
+            void attribute(uint16_t& value);
 
         };
 
@@ -49,6 +50,7 @@ namespace pubsub
 
             void attribute(std::string& value);
             void attribute(uint8_t& value);
+            void attribute(uint16_t& value);
         };
     }
 }

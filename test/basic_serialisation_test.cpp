@@ -10,12 +10,14 @@ class TestTopic : public pubsub::ITopic
 public:
     std::string message;
     uint8_t uint8;
+    uint16_t uint16;
     TestTopic() = default;
 
     void process_attributes(pubsub::IMessageProcessor& messageProcessor) override
     {
         messageProcessor.attribute(message);
         messageProcessor.attribute(uint8);
+        messageProcessor.attribute(uint16);
     }
 
     PUBSUB_TOPIC("test_topic", TestTopic)
@@ -81,6 +83,7 @@ TEST(basic_serialisation, serialise_and_deserialise)
     auto inputTopic = std::make_shared<TestTopic>();
     inputTopic->message = "test message";
     inputTopic->uint8 = 100U;
+    inputTopic->uint16 = 4096U;
 
     pubsub::basic_serialisation::BasicSerialiser serialiser{};
     pubsub::basic_serialisation::BasicDeserialiser deserialiser{};
@@ -96,5 +99,6 @@ TEST(basic_serialisation, serialise_and_deserialise)
 
     EXPECT_EQ(inputTopic->message, unwrappedTopic->message);
     EXPECT_EQ(inputTopic->uint8, unwrappedTopic->uint8);
+    EXPECT_EQ(inputTopic->uint16, unwrappedTopic->uint16);
 } 
 

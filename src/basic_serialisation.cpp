@@ -8,21 +8,26 @@
 using namespace pubsub;
 using namespace pubsub::basic_serialisation;
 
-static std::array<char,2> const string_size_to_bytes(std::string const& val)
+static uint16_t const bytes_to_unsigned_short(char const b1,
+                                        char const b2)
 {
-    uint16_t size { static_cast<uint16_t>(val.size()) };
+    auto lsb = static_cast<uint16_t>((b1 << 0) & 0x00ff);
+    auto msb = static_cast<uint16_t>((b2 << 8) & 0xff00);
+    return msb | lsb;
+}
+
+static std::array<char,2> unsigned_short_to_bytes(uint16_t const val)
+{
     return std::array<char,2> {
-        static_cast<char>((size >> 0) & 0xff),
-        static_cast<char>((size >> 8) & 0xff)
+        static_cast<char>((val >> 0) & 0xff),
+        static_cast<char>((val >> 8) & 0xff)
     };
 }
 
-static uint16_t const string_size_from_bytes(char const b1,
-                                                char const b2)
+static std::array<char,2> const string_size_to_bytes(std::string const& val)
 {
-    auto lsb = static_cast<uint16_t>((b1 >> 0) & 0x00ff);
-    auto msb = static_cast<uint16_t>((b2 << 8) & 0xff00);
-    return msb | lsb;
+    uint16_t size { static_cast<uint16_t>(val.size()) };
+    return unsigned_short_to_bytes(size);
 }
 
 size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
@@ -61,7 +66,7 @@ std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(std::vector<char> c
 
     // Get topic name size.
     index += MESSAGE_PREFIX.size();
-    uint16_t nameSize { string_size_from_bytes(buffer[index], buffer[index+1]) };
+    uint16_t nameSize { bytes_to_unsigned_short(buffer[index], buffer[index+1]) };
 
     index +=2;
     auto start = buffer.data() + index;
@@ -89,7 +94,7 @@ void BasicSerialiser::attribute(std::string& value)
 
 void BasicDeserialiser::attribute(std::string& value)
 {
-    uint16_t size { string_size_from_bytes(*mIter++, *mIter++) };
+    uint16_t size { bytes_to_unsigned_short(*mIter++, *mIter++) };
     if(size > mBuffer->size())
     {
         return;
@@ -108,6 +113,18 @@ void BasicDeserialiser::attribute(uint8_t& value)
 {
     value = *mIter;
     mIter++;
+}
+
+void BasicSerialiser::attribute(uint16_t& value)
+{
+    auto bytes = unsigned_short_to_bytes(value);
+    *mIter++ = bytes[0];
+    *mIter++ = bytes[1];
+}
+
+void BasicDeserialiser::attribute(uint16_t& value)
+{
+    value = bytes_to_unsigned_short(*mIter++, *mIter++);
 }
 
 void BasicDeserialiser::register_topic(std::string const& topicName, 

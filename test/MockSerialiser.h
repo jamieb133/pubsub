@@ -15,4 +15,5 @@ public:
     MOCK_METHOD(size_t, serialise, (TopicPtr,Buffer), (override));
     MOCK_METHOD(void, attribute, (std::string&), (override));
     MOCK_METHOD(void, attribute, (uint8_t&), (override));
+    MOCK_METHOD(void, attribute, (uint16_t&), (override));
 };
