@@ -5,8 +5,8 @@
 
 #include "IDeserialiser.h"
 
-#define PUBSUB_TOPIC(name, TopicType) \
-    static std::string const& _get_name() { static std::string const tName {name}; return tName; } \
+#define PUBSUB_TOPIC(TopicType) \
+    static std::string const& _get_name() { static std::string const tName {#TopicType}; return tName; } \
     std::string const& get_name() override { return _get_name(); } \
     static pubsub::ITopicReconstructor const& _get_reconstructor() \
     { \

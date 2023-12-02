@@ -32,7 +32,7 @@ public:
         messageProcessor.attribute(uint32);
     }
 
-    PUBSUB_TOPIC("test_topic", TestTopic)
+    PUBSUB_TOPIC(TestTopic)
 };
 
 static std::string const string_size_to_bytes(std::string const& val)

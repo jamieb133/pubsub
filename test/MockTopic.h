@@ -10,5 +10,5 @@ class MockTopic : public pubsub::ITopic
 {
  public:
     MOCK_METHOD(void, process_attributes, (pubsub::IMessageProcessor&), (override));
-    PUBSUB_TOPIC("mock topic", MockTopic)
+    PUBSUB_TOPIC(MockTopic)
 };

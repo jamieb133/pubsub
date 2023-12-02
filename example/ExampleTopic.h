@@ -32,5 +32,5 @@ public:
         messageProcessor.attribute(uint32);
     }
     
-    PUBSUB_TOPIC("example topic", ExampleTopic)
+    PUBSUB_TOPIC(ExampleTopic)
 };
