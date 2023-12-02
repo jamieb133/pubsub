@@ -8,26 +8,23 @@
 using namespace pubsub;
 using namespace pubsub::basic_serialisation;
 
-static uint16_t const bytes_to_unsigned_short(char const b1,
-                                        char const b2)
-{
-    auto lsb = static_cast<uint16_t>((b1 << 0) & 0x00ff);
-    auto msb = static_cast<uint16_t>((b2 << 8) & 0xff00);
-    return msb | lsb;
-}
-
-static std::array<char,2> unsigned_short_to_bytes(uint16_t const val)
-{
-    return std::array<char,2> {
-        static_cast<char>((val >> 0) & 0xff),
-        static_cast<char>((val >> 8) & 0xff)
-    };
-}
-
 static std::array<char,2> const string_size_to_bytes(std::string const& val)
 {
     uint16_t size { static_cast<uint16_t>(val.size()) };
-    return unsigned_short_to_bytes(size);
+    return std::array<char,2> {
+        static_cast<char>((size >> 0) & 0xff),
+        static_cast<char>((size >> 8) & 0xff)
+    };
+}
+
+bool const BasicDeserialiser::find(std::string const& val)
+{
+    std::string const current { mIter, mBuffer->end() };
+    size_t index { current.find(val) };
+    if(index == std::string::npos)
+        return false;
+    mIter += index + val.size();
+    return true;
 }
 
 size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
@@ -57,27 +54,13 @@ std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(std::vector<char> c
     mBuffer = &buffer;
     mIter = buffer.begin();
 
-    // TODO: zero copy here...
-    std::string const message { buffer.data(), buffer.data() + buffer.size() };
-
-    size_t index { message.find(MESSAGE_PREFIX) };
-    if(index == std::string::npos)
+    if(!find(MESSAGE_PREFIX))
         return nullptr;
 
-    // Get topic name size.
-    index += MESSAGE_PREFIX.size();
-    uint16_t nameSize { bytes_to_unsigned_short(buffer[index], buffer[index+1]) };
-
-    index +=2;
-    auto start = buffer.data() + index;
-    auto end = start + nameSize;
-    std::string const topicName { start, end };
+    std::string const topicName = extract_string();
 
     if(mTopicReconstructors.find(topicName) == mTopicReconstructors.end())
         return nullptr;
-
-    index += topicName.size();
-    mIter += index;
 
     return mTopicReconstructors[topicName]->deserialise_attributes(*this);
 }
@@ -92,39 +75,49 @@ void BasicSerialiser::attribute(std::string& value)
     mIter = std::copy(value.begin(), value.end(), mIter);
 }
 
-void BasicDeserialiser::attribute(std::string& value)
-{
-    uint16_t size { bytes_to_unsigned_short(*mIter++, *mIter++) };
-    if(size > mBuffer->size())
-    {
-        return;
-    }
-    value = std::string { mIter, mIter + size };
-    mIter += size;
-}
-
 void BasicSerialiser::attribute(uint8_t& value)
 {
-    *mIter = value;
-    mIter++;
+    populate<uint8_t>(value);
+}
+
+void BasicDeserialiser::attribute(std::string& value)
+{
+    value = extract_string();
 }
 
 void BasicDeserialiser::attribute(uint8_t& value)
 {
-    value = *mIter;
-    mIter++;
-}
-
-void BasicSerialiser::attribute(uint16_t& value)
-{
-    auto bytes = unsigned_short_to_bytes(value);
-    *mIter++ = bytes[0];
-    *mIter++ = bytes[1];
+    value = extract<uint8_t>();
 }
 
 void BasicDeserialiser::attribute(uint16_t& value)
 {
-    value = bytes_to_unsigned_short(*mIter++, *mIter++);
+    value = extract<uint16_t>();
+}
+
+void BasicDeserialiser::attribute(uint32_t& value)
+{
+    value = extract<uint32_t>();
+}
+
+void BasicDeserialiser::attribute(uint64_t& value)
+{
+    value = extract<uint32_t>();
+}
+
+void BasicSerialiser::attribute(uint16_t& value)
+{
+    populate<uint16_t>(value);
+}
+
+void BasicSerialiser::attribute(uint32_t& value)
+{
+    populate<uint32_t>(value);
+}
+
+void BasicSerialiser::attribute(uint64_t& value)
+{
+    populate<uint64_t>(value);
 }
 
 void BasicDeserialiser::register_topic(std::string const& topicName, 

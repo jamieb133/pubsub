@@ -11,13 +11,25 @@ public:
     std::string message;
     uint8_t uint8;
     uint16_t uint16;
+    uint32_t uint32;
     TestTopic() = default;
+
+    bool const operator==(TestTopic const& other) const
+    {
+        bool result {true};
+        result &= (other.message == message);
+        result &= (other.uint8 == uint8);
+        result &= (other.uint16 == uint16);
+        result &= (other.uint32 == uint32);
+        return result;
+    }
 
     void process_attributes(pubsub::IMessageProcessor& messageProcessor) override
     {
         messageProcessor.attribute(message);
         messageProcessor.attribute(uint8);
         messageProcessor.attribute(uint16);
+        messageProcessor.attribute(uint32);
     }
 
     PUBSUB_TOPIC("test_topic", TestTopic)
@@ -33,57 +45,13 @@ static std::string const string_size_to_bytes(std::string const& val)
     return std::string { bytes.begin(), bytes.end() };
 }
 
-TEST(basic_serialisation, serialise_topic) 
-{
-    return;
-    pubsub::basic_serialisation::BasicSerialiser serialiser {};
-    auto topic = std::make_shared<TestTopic>();
-    topic->message = "test message";
-    std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> buffer{};
-
-    size_t size { serialiser.serialise(topic, buffer) };
-
-    uint16_t attributeSize { static_cast<uint16_t>(topic->message.size()) };
-
-    auto nameSize = string_size_to_bytes(topic->get_name());
-    auto attrSize = string_size_to_bytes(topic->message);
-
-    std::string const expected { "pubsub--" + nameSize + topic->get_name() + attrSize + topic->message };
-    std::string const actual { buffer.begin(), size };
-
-    EXPECT_EQ(actual, expected);
-}
-
-TEST(basic_serialisation, deserialise_buffer) 
-{
-    return;
-    pubsub::basic_serialisation::BasicDeserialiser deserialiser{};
-    TestTopic expectedTopic { };
-    expectedTopic.message = "test message";
-    deserialiser.register_topic(expectedTopic.get_name(), TestTopic::_get_reconstructor());
-
-    auto nameSize = string_size_to_bytes(expectedTopic.get_name());
-    auto attrSize = string_size_to_bytes(expectedTopic.message);
-
-    std::string const serialised { "pubsub--" + nameSize + expectedTopic.get_name() + attrSize + expectedTopic.message };
-    std::vector<char> const buffer { serialised.begin(), serialised.end() };
-
-    auto topic = deserialiser.deserialise(buffer);
-
-    ASSERT_NE(topic, nullptr);
-
-    auto unwrappedTopic {std::dynamic_pointer_cast<TestTopic>(topic)};
-
-    ASSERT_NE(unwrappedTopic, nullptr);
-    EXPECT_EQ(unwrappedTopic->message, expectedTopic.message);
-}
-
 TEST(basic_serialisation, serialise_and_deserialise)
 {
     auto inputTopic = std::make_shared<TestTopic>();
     inputTopic->message = "test message";
     inputTopic->uint8 = 100U;
     inputTopic->uint16 = 4096U;
+    inputTopic->uint32 = 123456789;
 
     pubsub::basic_serialisation::BasicSerialiser serialiser{};
     pubsub::basic_serialisation::BasicDeserialiser deserialiser{};
@@ -96,9 +64,6 @@ TEST(basic_serialisation, serialise_and_deserialise)
     
     auto unwrappedTopic = std::dynamic_pointer_cast<TestTopic>(outputTopic);
     ASSERT_NE(unwrappedTopic, nullptr);
-
-    EXPECT_EQ(inputTopic->message, unwrappedTopic->message);
-    EXPECT_EQ(inputTopic->uint8, unwrappedTopic->uint8);
-    EXPECT_EQ(inputTopic->uint16, unwrappedTopic->uint16);
+    EXPECT_EQ(*inputTopic, *unwrappedTopic);
 } 
 

@@ -55,7 +55,12 @@ int main()
 
     for(int i = 0; i < 10; i++)
     {
-        auto topic = std::make_shared<ExampleTopic>("hello " + std::to_string(i));
+        auto topic = std::make_shared<ExampleTopic>();
+        topic->message = "hello";
+        topic->uint8 = i;
+        topic->uint16 = 4096U;
+        topic->uint32 = 123456789U;
+
         context.publish(topic);
         std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
