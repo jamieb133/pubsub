@@ -1,6 +1,7 @@
 
 #include <gtest/gtest.h>
-#include "basic_serialisation.h"
+#include "BasicSerialiser.h"
+#include "BasicDeserialiser.h"
 #include "ITopic.h"
 #include "IDeserialiser.h"
 #include "pubsub_macros.h"
@@ -53,8 +54,8 @@ TEST(basic_serialisation, serialise_and_deserialise)
     inputTopic->uint16 = 4096U;
     inputTopic->uint32 = 123456789;
 
-    pubsub::basic_serialisation::BasicSerialiser serialiser{};
-    pubsub::basic_serialisation::BasicDeserialiser deserialiser{};
+    pubsub::BasicSerialiser serialiser{};
+    pubsub::BasicDeserialiser deserialiser{};
     deserialiser.register_topic(inputTopic->get_name(), TestTopic::_get_reconstructor());
     std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> buffer{};
     size_t size { serialiser.serialise(inputTopic, buffer) };

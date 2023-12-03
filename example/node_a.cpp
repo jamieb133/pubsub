@@ -10,7 +10,8 @@
 #include "PipeServer.h"
 #include "Deliverer.h"
 #include "Receiver.h"
-#include "basic_serialisation.h"
+#include "BasicSerialiser.h"
+#include "BasicDeserialiser.h"
 #include "ExampleTopic.h"
 
 using namespace pubsub;
@@ -28,14 +29,14 @@ int main()
     // basic serialiser and a named pipe.
     std::string const pipename { "pubsub_example_pipe" };
     auto pipeClient = std::make_shared<pubsub::PipeClient>(pipename);
-    auto serialiser = std::make_shared<pubsub::basic_serialisation::BasicSerialiser>();
+    auto serialiser = std::make_shared<pubsub::BasicSerialiser>();
     auto indirectTransporter = std::make_shared<pubsub::IndirectTransporter>(serialiser, pipeClient);
 
     // We need a receiver to receive serialised messages sent via the indirect transporter. It
     // will use a matching deserialiser and a pipe server with the same name. It also needs the
     // deliver to pass up valid messages to the subscribers.
     auto pipeServer = std::make_shared<pubsub::PipeServer>(pipename);
-    auto deserialiser = std::make_shared<pubsub::basic_serialisation::BasicDeserialiser>();
+    auto deserialiser = std::make_shared<pubsub::BasicDeserialiser>();
     auto receiver = std::make_shared<pubsub::Receiver>(deliverer, deserialiser, pipeServer);
 
     pubsub::Context context{};

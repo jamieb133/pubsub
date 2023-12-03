@@ -28,5 +28,6 @@ namespace pubsub
     using SubscriberCallback = std::function<void(std::shared_ptr<ITopic>)>;
 
     constexpr int MAXIMUM_BUFFER_SIZE { 1024 };
+    uint16_t const MESSAGE_PREFIX { 0xABCDU };
 
 }

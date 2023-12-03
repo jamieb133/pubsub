@@ -1,13 +1,12 @@
 #include <string_view>
 #include <algorithm>
 
-#include "basic_serialisation.h"
+#include "BasicSerialiser.h"
 #include "ITopic.h"
 #include "ITopicReconstructor.h"
 #include "Crc.h"
 
 using namespace pubsub;
-using namespace pubsub::basic_serialisation;
 
 static Crc CRC{};
 
@@ -30,13 +29,6 @@ void BasicSerialiser::populate_string(std::string const& val)
     mIter = std::copy(val.begin(), val.end(), mIter);
 }
 
-std::string const BasicDeserialiser::extract_string()
-{
-    auto size = extract<uint16_t>();
-    std::string const result { mIter, mIter + size };
-    mIter += size;
-    return result;
-}
 
 size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
                                     std::array<char,MAXIMUM_BUFFER_SIZE>& buffer)
@@ -80,35 +72,6 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
     return messageSize;
 }
 
-std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffer)
-{
-    mBuffer = &buffer;
-    mIter = buffer.cget().begin();
-
-    if(extract<uint16_t>() != MESSAGE_PREFIX)
-        return nullptr;
-
-    uint16_t const messageSize { extract<uint16_t>() };
-    auto sizeIter = mIter;
-
-    // Validate CRC.
-    uint8_t const expectedCrc { extract<uint8_t>() };
-    int64_t crcOffset{ mIter - buffer.cget().begin() };
-    auto pBuffer = reinterpret_cast<uint8_t const*>(buffer.cget().data() + crcOffset);
-    int64_t crcDataSize{ messageSize - crcOffset };
-    uint8_t const actualCrc { CRC.generate(pBuffer, crcDataSize)};
-
-    if(actualCrc != expectedCrc)
-        return nullptr;
-    
-    std::string const topicName { extract_string() };
-
-    if(mTopicReconstructors.find(topicName) == mTopicReconstructors.end())
-        return nullptr;
-
-    return mTopicReconstructors[topicName]->deserialise_attributes(*this);
-}
-
 void BasicSerialiser::attribute(std::string& value)
 {
     populate_string(value);
@@ -117,31 +80,6 @@ void BasicSerialiser::attribute(std::string& value)
 void BasicSerialiser::attribute(uint8_t& value)
 {
     populate<uint8_t>(value);
-}
-
-void BasicDeserialiser::attribute(std::string& value)
-{
-    value = extract_string();
-}
-
-void BasicDeserialiser::attribute(uint8_t& value)
-{
-    value = extract<uint8_t>();
-}
-
-void BasicDeserialiser::attribute(uint16_t& value)
-{
-    value = extract<uint16_t>();
-}
-
-void BasicDeserialiser::attribute(uint32_t& value)
-{
-    value = extract<uint32_t>();
-}
-
-void BasicDeserialiser::attribute(uint64_t& value)
-{
-    value = extract<uint32_t>();
 }
 
 void BasicSerialiser::attribute(uint16_t& value)
@@ -157,10 +95,4 @@ void BasicSerialiser::attribute(uint32_t& value)
 void BasicSerialiser::attribute(uint64_t& value)
 {
     populate<uint64_t>(value);
-}
-
-void BasicDeserialiser::register_topic(std::string const& topicName, 
-                                        ITopicReconstructor const& handler)
-{
-    mTopicReconstructors.insert({topicName, &handler});
 }
