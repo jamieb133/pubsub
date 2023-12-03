@@ -4,9 +4,12 @@
 #include "basic_serialisation.h"
 #include "ITopic.h"
 #include "ITopicReconstructor.h"
+#include "Crc.h"
 
 using namespace pubsub;
 using namespace pubsub::basic_serialisation;
+
+static Crc CRC{};
 
 static std::array<char,2> const string_size_to_bytes(std::string const& val)
 {
@@ -35,33 +38,46 @@ std::string const BasicDeserialiser::extract_string()
     return result;
 }
 
-bool const BasicDeserialiser::find(std::string const& val)
-{
-    auto buffer = mBuffer->cget();
-    std::string const current { buffer.data(), buffer.size() };
-    size_t index { current.find(val) };
-    if(index == std::string::npos)
-        return false;
-    mIter += index + val.size();
-    return true;
-}
-
 size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
                                     std::array<char,MAXIMUM_BUFFER_SIZE>& buffer)
 {
     mBuffer = &buffer;
+    mIter = buffer.begin();
 
     // Add message preamble.
-    mIter = std::copy(MESSAGE_PREFIX.begin(), MESSAGE_PREFIX.end(), buffer.begin());
+    populate<uint16_t>(MESSAGE_PREFIX);
 
-    // Add topic name size.
+    // Reserve 16 bits for size.
+    auto sizeIter = mIter;
+    mIter += 2;
+
+    // Reserve 8 bits for CRC.
+    auto crcIter = mIter;
+    mIter++;
+
+    // Add topic name.
     std::string const& topicName { topic->get_name() };
     populate_string(topicName);
 
     // Add attributes.
     topic->process_attributes(*this);
 
-    return mIter - buffer.begin();
+    // Add message size, mIter will now be at the end of the last attribute which marks
+    // the end of the message. 
+    auto eomIter = mIter;
+    uint16_t messageSize {static_cast<uint16_t>(eomIter - buffer.begin())};
+    mIter = sizeIter;
+    populate<uint16_t>(messageSize);
+
+    // Add crc.
+    auto crcStartIter = crcIter + 1;
+    int64_t crcOffset{crcStartIter - buffer.begin()};
+    auto pBuffer = reinterpret_cast<uint8_t*>(buffer.data() + crcOffset);
+    int64_t crcDataSize{ messageSize - crcOffset };
+    uint8_t crc { CRC.generate(pBuffer, messageSize - crcOffset) };
+    populate<uint8_t>(crc);
+
+    return messageSize;
 }
 
 std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffer)
@@ -69,10 +85,23 @@ std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffe
     mBuffer = &buffer;
     mIter = buffer.cget().begin();
 
-    if(!find(MESSAGE_PREFIX))
+    if(extract<uint16_t>() != MESSAGE_PREFIX)
         return nullptr;
 
-    std::string const topicName = extract_string();
+    uint16_t const messageSize { extract<uint16_t>() };
+    auto sizeIter = mIter;
+
+    // Validate CRC.
+    uint8_t const expectedCrc { extract<uint8_t>() };
+    int64_t crcOffset{ mIter - buffer.cget().begin() };
+    auto pBuffer = reinterpret_cast<uint8_t const*>(buffer.cget().data() + crcOffset);
+    int64_t crcDataSize{ messageSize - crcOffset };
+    uint8_t const actualCrc { CRC.generate(pBuffer, crcDataSize)};
+
+    if(actualCrc != expectedCrc)
+        return nullptr;
+    
+    std::string const topicName { extract_string() };
 
     if(mTopicReconstructors.find(topicName) == mTopicReconstructors.end())
         return nullptr;

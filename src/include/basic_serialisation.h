@@ -20,7 +20,7 @@ namespace pubsub
 {
     namespace basic_serialisation
     {
-        std::string const MESSAGE_PREFIX { "pubsub--" };
+        uint16_t const MESSAGE_PREFIX { 0xABCDU };
 
         class BasicSerialiser : public ISerialiser
         {
@@ -56,8 +56,6 @@ namespace pubsub
             std::map<std::string,ITopicReconstructor const*> mTopicReconstructors{};
             Buffer const* mBuffer{};
             std::array<char, MAXIMUM_BUFFER_SIZE>::const_iterator mIter{};
-
-            bool const find(std::string const& val);
 
             template <typename T>
             typename std::enable_if<std::is_unsigned<T>::value, T>::type extract()
