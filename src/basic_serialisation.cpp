@@ -17,6 +17,24 @@ static std::array<char,2> const string_size_to_bytes(std::string const& val)
     };
 }
 
+void BasicSerialiser::populate_string(std::string const& val)
+{
+    // Add length of string.
+    std::array<char,2> len { string_size_to_bytes(val) };
+    mIter = std::copy(len.begin(), len.end(), mIter);
+
+    // Copy string content.
+    mIter = std::copy(val.begin(), val.end(), mIter);
+}
+
+std::string const BasicDeserialiser::extract_string()
+{
+    auto size = extract<uint16_t>();
+    std::string const result { mIter, mIter + size };
+    mIter += size;
+    return result;
+}
+
 bool const BasicDeserialiser::find(std::string const& val)
 {
     auto buffer = mBuffer->cget();
@@ -38,11 +56,7 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
 
     // Add topic name size.
     std::string const& topicName { topic->get_name() };
-    std::array<char,2> const sizeBytes { string_size_to_bytes(topicName) };
-    mIter = std::copy(sizeBytes.begin(), sizeBytes.end(), mIter);
-
-    // Add topic name.
-    mIter = std::copy(topicName.begin(), topicName.end(), mIter);
+    populate_string(topicName);
 
     // Add attributes.
     topic->process_attributes(*this);
@@ -68,12 +82,7 @@ std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffe
 
 void BasicSerialiser::attribute(std::string& value)
 {
-    // Add length of string.
-    std::array<char,2> len { string_size_to_bytes(value) };
-    mIter = std::copy(len.begin(), len.end(), mIter);
-
-    // Copy string content.
-    mIter = std::copy(value.begin(), value.end(), mIter);
+    populate_string(value);
 }
 
 void BasicSerialiser::attribute(uint8_t& value)

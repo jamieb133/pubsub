@@ -38,6 +38,8 @@ namespace pubsub
                 }
             }
 
+            void populate_string(std::string const& val);
+
         public:
             size_t serialise(std::shared_ptr<ITopic> const topic,
                                 std::array<char,MAXIMUM_BUFFER_SIZE>& buffer);
@@ -72,13 +74,7 @@ namespace pubsub
                 return result;
             }
 
-            std::string const extract_string()
-            {
-                auto size = extract<uint16_t>();
-                std::string const result { mIter, mIter + size };
-                mIter += size;
-                return result;
-            }
+            std::string const extract_string();
 
         public:
             std::shared_ptr<ITopic> const deserialise(Buffer const& buffer);
