@@ -14,8 +14,10 @@ namespace pubsub
     {
     private:
         crc mLookupTable[256];
-    public:
         Crc();
+
+    public:
+        static Crc& get_instance();
         crc const generate(crc const message[],
                             size_t const size);
     };

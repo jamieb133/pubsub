@@ -19,6 +19,12 @@ Crc::Crc()
     }
 }
 
+Crc& Crc::get_instance()
+{
+    static Crc instance{};
+    return instance;
+}
+
 crc const Crc::generate(crc const message[],
                         size_t const size)
 {

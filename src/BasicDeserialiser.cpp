@@ -8,8 +8,6 @@
 
 using namespace pubsub;
 
-static Crc CRC{};
-
 std::string const BasicDeserialiser::extract_string()
 {
     auto size = extract<uint16_t>();
@@ -40,7 +38,7 @@ std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffe
     int64_t crcOffset{ mIter - buffer.cget().begin() };
     auto pBuffer = reinterpret_cast<uint8_t const*>(buffer.cget().data() + crcOffset);
     int64_t crcDataSize{ messageSize - crcOffset };
-    uint8_t const actualCrc { CRC.generate(pBuffer, crcDataSize)};
+    uint8_t const actualCrc { Crc::get_instance().generate(pBuffer, crcDataSize)};
 
     if(actualCrc != expectedCrc)
         return nullptr;

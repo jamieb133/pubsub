@@ -8,8 +8,6 @@
 
 using namespace pubsub;
 
-static Crc CRC{};
-
 static std::array<char,2> const string_size_to_bytes(std::string const& val)
 {
     uint16_t size { static_cast<uint16_t>(val.size()) };
@@ -66,7 +64,7 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
     int64_t crcOffset{crcStartIter - buffer.begin()};
     auto pBuffer = reinterpret_cast<uint8_t*>(buffer.data() + crcOffset);
     int64_t crcDataSize{ messageSize - crcOffset };
-    uint8_t crc { CRC.generate(pBuffer, messageSize - crcOffset) };
+    uint8_t crc { Crc::get_instance().generate(pBuffer, messageSize - crcOffset) };
     populate<uint8_t>(crc);
 
     return messageSize;
