@@ -1,10 +1,15 @@
 #pragma once
 
+#include <array>
+
+#include "pubsub_macros.h"
+#include "Buffers.h"
+
 namespace pubsub
 {
     class IServer
     {
     public:
-        virtual bool const read(std::shared_ptr<std::vector<char>>& buffer) = 0;
+        virtual bool const read(Buffer& buffer) = 0;
     };
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IMessageProcessor.h"
+#include "IDeserialiser.h"
 
 namespace pubsub
 {

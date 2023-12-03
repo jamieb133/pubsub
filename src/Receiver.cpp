@@ -3,6 +3,7 @@
 #include "IDeserialiser.h"
 #include "IDeliverer.h"
 #include "ITopic.h"
+#include "Buffers.h"
 
 using namespace pubsub;
 
@@ -23,21 +24,29 @@ Receiver::~Receiver()
 
 void Receiver::read_server()
 {
+    Buffers& buffers { Buffers::get_instance() };
     while(mRunning)
     {
-        std::shared_ptr<std::vector<char>> rxData{};
-        if(mServer->read(rxData))
+        auto rxBufferIter = buffers.get_buffer();
+        if(buffers.is_end(rxBufferIter))
+        {
+            continue;
+        }
+
+        if(mServer->read(*rxBufferIter))
         {
             
             // TODO: push this onto a queue to be processed by a different thread.
 
-            std::shared_ptr<ITopic> deserialisedTopic { mDeserialiser->deserialise(*rxData) };
+            std::shared_ptr<ITopic> deserialisedTopic { mDeserialiser->deserialise(*rxBufferIter) };
             if(deserialisedTopic)
             {
                 mDeliverer->on_data(deserialisedTopic);
             }
 
         }
+
+        buffers.release_buffer(*rxBufferIter);
         std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
 }

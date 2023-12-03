@@ -3,8 +3,6 @@
 #include <functional>
 #include <memory>
 
-#include "IDeserialiser.h"
-
 #define PUBSUB_TOPIC(TopicType) \
     static std::string const& _get_name() { static std::string const tName {#TopicType}; return tName; } \
     std::string const& get_name() override { return _get_name(); } \

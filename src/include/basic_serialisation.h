@@ -25,7 +25,7 @@ namespace pubsub
         class BasicSerialiser : public ISerialiser
         {
         private:
-            std::array<char,MAXIMUM_BUFFER_SIZE> const* mBuffer{};
+            std::array<char,MAXIMUM_BUFFER_SIZE>* mBuffer{};
             std::array<char,MAXIMUM_BUFFER_SIZE>::iterator mIter{};
 
             template<typename T>
@@ -52,8 +52,8 @@ namespace pubsub
         class BasicDeserialiser : public IDeserialiser
         {
             std::map<std::string,ITopicReconstructor const*> mTopicReconstructors{};
-            std::vector<char> const* mBuffer{};
-            std::vector<char>::const_iterator mIter{};
+            Buffer const* mBuffer{};
+            std::array<char, MAXIMUM_BUFFER_SIZE>::const_iterator mIter{};
 
             bool const find(std::string const& val);
 
@@ -81,7 +81,7 @@ namespace pubsub
             }
 
         public:
-            std::shared_ptr<ITopic> const deserialise(std::vector<char> const& buffer);
+            std::shared_ptr<ITopic> const deserialise(Buffer const& buffer);
             
             void register_topic(std::string const& topicName, 
                                 ITopicReconstructor const& handler);

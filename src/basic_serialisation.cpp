@@ -19,7 +19,8 @@ static std::array<char,2> const string_size_to_bytes(std::string const& val)
 
 bool const BasicDeserialiser::find(std::string const& val)
 {
-    std::string const current { mIter, mBuffer->end() };
+    auto buffer = mBuffer->cget();
+    std::string const current { buffer.data(), buffer.size() };
     size_t index { current.find(val) };
     if(index == std::string::npos)
         return false;
@@ -49,10 +50,10 @@ size_t BasicSerialiser::serialise(std::shared_ptr<ITopic> const topic,
     return mIter - buffer.begin();
 }
 
-std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(std::vector<char> const& buffer)
+std::shared_ptr<ITopic> const BasicDeserialiser::deserialise(Buffer const& buffer)
 {
     mBuffer = &buffer;
-    mIter = buffer.begin();
+    mIter = buffer.cget().begin();
 
     if(!find(MESSAGE_PREFIX))
         return nullptr;

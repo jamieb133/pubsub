@@ -59,7 +59,11 @@ TEST(basic_serialisation, serialise_and_deserialise)
     std::array<char,pubsub::MAXIMUM_BUFFER_SIZE> buffer{};
     size_t size { serialiser.serialise(inputTopic, buffer) };
     
-    auto outputTopic = deserialiser.deserialise(std::vector<char>{buffer.data(), buffer.data() + size});
+    pubsub::Buffer buf {};
+    buf.get() = buffer;
+    buf.set_size(size);    
+
+    auto outputTopic = deserialiser.deserialise(buf);
     ASSERT_NE(outputTopic, nullptr);
     
     auto unwrappedTopic = std::dynamic_pointer_cast<TestTopic>(outputTopic);

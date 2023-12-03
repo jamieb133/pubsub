@@ -26,7 +26,7 @@ PipeServer::PipeServer(std::string const& name) :
     }
 }
 
-bool const PipeServer::read(std::shared_ptr<std::vector<char>>& buffer)
+bool const PipeServer::read(Buffer& buffer)
 {
     int fd { open(mName.c_str(), O_RDONLY) };
     if(fd == -1)
@@ -36,8 +36,7 @@ bool const PipeServer::read(std::shared_ptr<std::vector<char>>& buffer)
     }
 
     // TODO: implement more efficient strategy...
-    buffer = std::make_shared<std::vector<char>>(MAXIMUM_BUFFER_SIZE);
-    ssize_t numBytesRead { ::read(fd, buffer->data(), buffer->size()) };
+    ssize_t numBytesRead { ::read(fd, buffer.get().data(), buffer.get().size()) };
 
     if(numBytesRead == -1)
     {
@@ -45,7 +44,7 @@ bool const PipeServer::read(std::shared_ptr<std::vector<char>>& buffer)
         return false;
     }
 
-    buffer->resize(numBytesRead);
+    buffer.set_size(numBytesRead);
 
     return true;
 }

@@ -16,6 +16,6 @@ namespace pubsub
         std::string const mName;
     public:
         PipeServer(std::string const& name);
-        bool const read(std::shared_ptr<std::vector<char>>& buffer);
+        bool const read(Buffer& buffer);
     };
 }
